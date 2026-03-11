@@ -77,20 +77,10 @@ jobs:
         }
         # Package OneFile version
         if (Test-Path "PDFQRCodeCompare.exe") {
-          New-Item -ItemType Directory -Path "PDFQRCodeCompare-OneFile" -Force
+          New-Item -ItemType Directory -Path "PDFQRCodeCompare-OneFile" -Force | Out-Null
           Copy-Item "PDFQRCodeCompare.exe" -Destination "PDFQRCodeCompare-OneFile/"
-          @"
-PDF QR Code Compare - Single File Edition
-
-INSTALLATION:
-1. Install Visual C++ Redistributable: https://aka.ms/vs/17/release/vc_redist.x64.exe
-2. Extract PDFQRCodeCompare.exe to English path (e.g., C:\Tools\)
-3. Right-click → Run as Administrator
-4. First run may be slow (extracting files)
-
-Full guide: https://github.com/Reginald-Du/pdf-qrcode-compare/blob/main/USER_FIX_GUIDE.md
-"@ | Out-File -FilePath "PDFQRCodeCompare-OneFile/README.txt" -Encoding UTF8
-          powershell Compress-Archive -Force -Path PDFQRCodeCompare-OneFile -DestinationPath PDFQRCodeCompare-Windows-OneFile.zip
+          "PDF QR Code Compare - Single File Edition`n`nINSTALLATION:`n1. Install VC++: https://aka.ms/vs/17/release/vc_redist.x64.exe`n2. Extract to English path`n3. Run as Administrator" | Out-File -FilePath "PDFQRCodeCompare-OneFile/README.txt" -Encoding UTF8
+          Compress-Archive -Force -Path PDFQRCodeCompare-OneFile -DestinationPath PDFQRCodeCompare-Windows-OneFile.zip
           Write-Host "Created OneFile package"
         }
         cd ..
