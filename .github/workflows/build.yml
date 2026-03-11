@@ -49,11 +49,50 @@ jobs:
         Write-Host "Build verification passed"
         Get-ChildItem -Path "dist/PDFQRCodeCompare/_internal" -Filter "python*.dll" | Format-Table Name, Length
 
+    - name: Build OneFile Version (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        echo "Building single-file executable for better compatibility..."
+        pyinstaller --clean --noconfirm --log-level=INFO main_onefile.spec
+
+    - name: Verify OneFile build
+      if: runner.os == 'Windows'
+      run: |
+        if (Test-Path "dist/PDFQRCodeCompare.exe") {
+          Write-Host "OneFile build successful"
+          $fileSize = (Get-Item "dist/PDFQRCodeCompare.exe").Length / 1MB
+          Write-Host "Executable size: $([math]::Round($fileSize, 2)) MB"
+        } else {
+          Write-Warning "OneFile build may have failed, but continuing..."
+        }
+
     - name: Create Windows ZIP
       if: runner.os == 'Windows'
       run: |
         cd dist
-        powershell Compress-Archive -Path PDFQRCodeCompare -DestinationPath PDFQRCodeCompare-Windows.zip
+        # Package OneDir version
+        if (Test-Path "PDFQRCodeCompare") {
+          powershell Compress-Archive -Force -Path PDFQRCodeCompare -DestinationPath PDFQRCodeCompare-Windows.zip
+          Write-Host "Created OneDir package"
+        }
+        # Package OneFile version
+        if (Test-Path "PDFQRCodeCompare.exe") {
+          New-Item -ItemType Directory -Path "PDFQRCodeCompare-OneFile" -Force
+          Copy-Item "PDFQRCodeCompare.exe" -Destination "PDFQRCodeCompare-OneFile/"
+          @"
+PDF QR Code Compare - Single File Edition
+
+INSTALLATION:
+1. Install Visual C++ Redistributable: https://aka.ms/vs/17/release/vc_redist.x64.exe
+2. Extract PDFQRCodeCompare.exe to English path (e.g., C:\Tools\)
+3. Right-click → Run as Administrator
+4. First run may be slow (extracting files)
+
+Full guide: https://github.com/Reginald-Du/pdf-qrcode-compare/blob/main/USER_FIX_GUIDE.md
+"@ | Out-File -FilePath "PDFQRCodeCompare-OneFile/README.txt" -Encoding UTF8
+          powershell Compress-Archive -Force -Path PDFQRCodeCompare-OneFile -DestinationPath PDFQRCodeCompare-Windows-OneFile.zip
+          Write-Host "Created OneFile package"
+        }
         cd ..
 
     - name: Build with PyInstaller (macOS)
@@ -73,7 +112,9 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: PDFQRCodeCompare-Windows
-        path: dist/PDFQRCodeCompare-Windows.zip
+        path: |
+          dist/PDFQRCodeCompare-Windows.zip
+          dist/PDFQRCodeCompare-Windows-OneFile.zip
         retention-days: 30
 
     - name: Upload macOS artifacts
@@ -90,6 +131,7 @@ jobs:
       with:
         files: |
           dist/PDFQRCodeCompare-Windows.zip
+          dist/PDFQRCodeCompare-Windows-OneFile.zip
           dist/PDFQRCodeCompare-macOS.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
