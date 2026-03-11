@@ -37,7 +37,17 @@ jobs:
     - name: Build with PyInstaller (Windows)
       if: runner.os == 'Windows'
       run: |
-        pyinstaller --clean --noconfirm main.spec
+        pyinstaller --clean --noconfirm --log-level=INFO main.spec
+
+    - name: Verify Windows build
+      if: runner.os == 'Windows'
+      run: |
+        if (!(Test-Path "dist/PDFQRCodeCompare/PDFQRCodeCompare.exe")) {
+          Write-Error "Build failed: executable not found"
+          exit 1
+        }
+        Write-Host "Build verification passed"
+        Get-ChildItem -Path "dist/PDFQRCodeCompare/_internal" -Filter "python*.dll" | Format-Table Name, Length
 
     - name: Create Windows ZIP
       if: runner.os == 'Windows'
