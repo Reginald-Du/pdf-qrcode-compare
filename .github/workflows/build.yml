@@ -1,0 +1,85 @@
+name: Build Application
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest]
+        python-version: ['3.11']
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+
+    - name: Build with PyInstaller (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        pyinstaller --clean --noconfirm main.spec
+
+    - name: Create Windows ZIP
+      if: runner.os == 'Windows'
+      run: |
+        cd dist
+        powershell Compress-Archive -Path PDFQRCodeCompare -DestinationPath PDFQRCodeCompare-Windows.zip
+        cd ..
+
+    - name: Build with PyInstaller (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        pyinstaller --clean --noconfirm main.spec
+
+    - name: Create macOS ZIP
+      if: runner.os == 'macOS'
+      run: |
+        cd dist
+        zip -r PDFQRCodeCompare-macOS.zip PDFQRCodeCompare.app
+        cd ..
+
+    - name: Upload Windows artifacts
+      if: runner.os == 'Windows'
+      uses: actions/upload-artifact@v4
+      with:
+        name: PDFQRCodeCompare-Windows
+        path: dist/PDFQRCodeCompare-Windows.zip
+        retention-days: 30
+
+    - name: Upload macOS artifacts
+      if: runner.os == 'macOS'
+      uses: actions/upload-artifact@v4
+      with:
+        name: PDFQRCodeCompare-macOS
+        path: dist/PDFQRCodeCompare-macOS.zip
+        retention-days: 30
+
+    - name: Release
+      if: startsWith(github.ref, 'refs/tags/v')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          dist/PDFQRCodeCompare-Windows.zip
+          dist/PDFQRCodeCompare-macOS.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

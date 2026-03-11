@@ -1,0 +1,56 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+.venv/
+.venv_*/
+env/
+ENV/
+
+# PyInstaller
+build/
+dist/
+*.spec.bak
+.pyinstaller_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.continue/
+
+# Project specific
+artifacts/
+*.log
+diagnosis_report.md
+distribution_compat_report.md
+solutions/
+
+# Trae
+.trae/
+
+# Test outputs
+test_output/
+*.pyc
+
+# Large test files (exclude files > 50MB)
+test/测试文件D.pdf
+test/测试文件E.pdf
+
+# Distribution
+dist_web/
+*.dmg
+*.zip
+*.app
+
+# Temporary files
+*.tmp
+.cache/
